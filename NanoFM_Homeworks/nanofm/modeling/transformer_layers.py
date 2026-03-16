@@ -89,7 +89,7 @@ class Attention(nn.Module):
         super().__init__()
         self.num_heads = dim // head_dim
         self.scale = head_dim ** -0.5
-
+        self.head_dim = head_dim
         # TODO: Define here the linear layer(s) producing K, Q, V from the input x
         # Hint: Do you need to define three different projections, or can you use a single one for all three?
         self.qkv = nn.Linear(dim,dim*3, bias=qkv_bias)

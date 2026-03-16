@@ -61,12 +61,18 @@ class Mlp(nn.Module):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
+        self.gelu = nn.GELU()
+        self.fc_1 = nn.Linear(in_features, hidden_features, bias=bias)
+        self.fc_2 = nn.Linear(hidden_features, out_features, bias=bias)
         
-        ??? # TODO
+        
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
-        ??? # TODO
+        x = self.fc_1(x)
+        x = self.gelu(x)
+        x = self.fc_2(x)
+        return x
 
 
 class Attention(nn.Module):
@@ -86,37 +92,40 @@ class Attention(nn.Module):
 
         # TODO: Define here the linear layer(s) producing K, Q, V from the input x
         # Hint: Do you need to define three different projections, or can you use a single one for all three?
-        ???
+        self.qkv = nn.Linear(dim,dim*3)
 
         self.attn_out_proj = nn.Linear(dim, dim, bias=proj_bias)
 
-    def forward(self, x: torch.Tensor, : Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         B, L, D = x.shape # Batch size, sequence length, and dimension
 
         # TODO: Compute the keys K, queries Q, and values V from x. Each should be of shape [B num_heads L head_dim].
-        q, k, v = ???
-
+        qkv = self.qkv(x)
+        q, k, v = rearrange(qkv, "b n (nqkv nh hd) -> nqkv b nh n hd", nqkv = 3, nh =self.num_heads, hd = self.head_dim)
+        
         # TODO: Compute the attention matrix (pre softmax) and scale it by 1/sqrt(d_k). It should be of shape [B num_heads L L].
         # Hint: Use the already defined self.scale
-        attn = ???
+        q_scaled = q * self.scale
+        attn = torch.matmul(q_scaled,k.transpose(-1,-2))
 
         if mask is not None:
             mask = rearrange(mask, "b n m -> b 1 n m") # Unsqueeze for multi-head attention
             # TODO: Apply the optional attention mask. Wherever the mask is False, replace the attention 
             # matrix value by negative infinity → zero attention weight after softmax.
-            attn = ???
+            attn = torch.where(mask, attn,-torch.inf)
+
 
         # TODO: Compute the softmax over the last dimension
-        attn = ???
+        attn = nn.functional.softmax(attn,dim = -1)
 
         # TODO: Weight the values V by the attention matrix and concatenate the different attention heads
         # Make sure to reshape the output to the original shape of x, i.e. [B L D]
-        x = ???
+        x = torch.matmul(attn,v)
+        x = rearrange(x, "b nh n hd -> b n (nh hd)")
 
         # Output projection
         x = self.attn_out_proj(x)
         return x
-
 
 class CrossAttention(nn.Module):
     """
@@ -132,13 +141,13 @@ class CrossAttention(nn.Module):
         super().__init__()
         self.num_heads = dim // head_dim
         self.scale = head_dim ** -0.5
-
+        self.head_dim = head_dim
         # TODO: Define here the linear layer producing Q from the input x
-        ???
+        self.q = nn.Linear(dim,dim , bias=qkv_bias)
 
         # TODO: Define here the linear layers producing K, V from the context
         # Hint: Do you need to define two different projections, or can you use a single one for both?
-        ???
+        self.kv = nn.Linear(dim,dim*2, bias=qkv_bias)
 
         self.attn_out_proj = nn.Linear(dim, dim, bias=proj_bias)
 
@@ -147,28 +156,31 @@ class CrossAttention(nn.Module):
         _, M, _ = context.shape # _, context sequence length (M), _
 
         # TODO: Compute the queries Q from x. It should be of shape [B num_heads N head_dim].
-        q = ???
+        q = self.q(x)
+        q = rearrange(q, "b n (nh hd) -> b nh n hd", nh = self.num_heads, hd = self.head_dim)
 
         # TODO: Compute the keys K and values V from the context. Each should be of shape [B num_heads M head_dim].
-        q = ???
+        kv = self.kv(context)
+        k, v = rearrange(kv, "b m (nkv nh hd) -> nkv b nh m hd", nkv = 2, nh = self.num_heads, hd = self.head_dim)
 
         # TODO: Compute the attention matrix (pre softmax) and scale it by 1/sqrt(d_k). It should be of shape [B num_heads N M].
         # Hint: Use the already defined self.scale
-        attn = ???
+        attn = torch.matmul(q, k.transpose(-1, -2)) * self.scale
 
         if mask is not None:
             mask = rearrange(mask, "b n m -> b 1 n m") # Unsqueeze for multi-head attention
             # TODO: Apply the optional attention mask. Wherever the mask is False, replace the attention 
             # matrix value by negative infinity → zero attention weight after softmax.
-            attn = ???
+            attn = torch.where(mask, attn, -torch.inf)
 
         # TODO: Compute the softmax over the last dimension
-        attn = ???
+        attn = nn.functional.softmax(attn, dim=-1)
 
         # TODO: Weight the values V by the attention matrix and concatenate the different attention heads
         # Make sure to reshape the output to the original shape of x, i.e. [B N D]
-        x = ???
-        
+        x = torch.matmul(attn, v)
+        x = rearrange(x, "b nh n hd -> b n (nh hd)")
+
         # Output projection
         x = self.attn_out_proj(x)
 
@@ -187,15 +199,16 @@ class Block(nn.Module):
     """
     def __init__(self, dim: int, head_dim: int = 64, mlp_ratio: float = 4., use_bias: bool = False):
         super().__init__()
-        self.norm1 = ??? # TODO (use the LayerNorm defined above)
-        self.attn = ??? # TODO
-        self.norm2 = ??? # TODO (use the LayerNorm defined above)
+        self.norm1 = LayerNorm(dim, bias=use_bias)
+        self.attn = Attention(dim, head_dim, use_bias=use_bias)
+        self.norm2 = LayerNorm(dim, bias=use_bias)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = ??? # TODO
+        self.mlp = Mlp(dim, mlp_hidden_dim, use_bias=use_bias)
 
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        
-        ??? # TODO
+        x = x + self.attn(self.norm1(x), mask)
+        x = x + self.mlp(self.norm2(x))
+        return x
 
 
 class DecoderBlock(nn.Module):
@@ -211,16 +224,16 @@ class DecoderBlock(nn.Module):
     """
     def __init__(self, dim: int, head_dim: int = 64, mlp_ratio: float = 4., use_bias: bool = False):
         super().__init__()
-        self.norm1 = ??? # TODO (use the LayerNorm defined above)
-        self.query_norm = ??? # TODO (use the LayerNorm defined above)
-        self.context_norm = ??? # TODO (use the LayerNorm defined above)
-        self.norm2 = ??? # TODO (use the LayerNorm defined above)
+        self.norm1 = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
+        self.query_norm = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
+        self.context_norm = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
+        self.norm2 = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
 
-        self.self_attn = ??? # TODO Attention layer
-        self.cross_attn = ??? # TODO CrossAttention layer
+        self.self_attn = Attention(dim, head_dim, use_bias=use_bias) # TODO Attention layer
+        self.cross_attn = Attention(dim, head_dim, use_bias=use_bias) # TODO CrossAttention layer
 
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = ??? # TODO MLP layer
+        self.mlp = Mlp(dim, mlp_hidden_dim, use_bias=use_bias) # TODO MLP layer
 
     def forward(self, 
             x: torch.Tensor, 
@@ -234,7 +247,10 @@ class DecoderBlock(nn.Module):
         # and the cross-attention mask (xa_mask) to the cross-attention layer.
         # Don't forget to add the residual connections after each layer, and
         # to apply the normalizations on the inputs of each layer.
-        ??? # TODO
+        x = x + self.self_attn(self.query_norm(x), mask=sa_mask)
+        x = x + self.cross_attn(self.context_norm(x), self.context_norm(context), mask=xa_mask)
+        x = x + self.mlp(self.norm2(x))
+        return x
 
 
 class TransformerTrunk(nn.Module):
@@ -258,11 +274,14 @@ class TransformerTrunk(nn.Module):
         ):
         super().__init__()
 
-        self.blocks = ??? # TODO: Create a list of transformer blocks and wrap inside nn.ModuleList
-    
+        self.blocks = nn.ModuleList([
+            Block(dim, head_dim, mlp_ratio, use_bias) for _ in range(depth)
+        ])
+
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        
-        ??? # TODO
+        for block in self.blocks:
+            x = block(x, mask)
+        return x
 
 
 class TransformerDecoderTrunk(nn.Module):
@@ -286,8 +305,11 @@ class TransformerDecoderTrunk(nn.Module):
         ):
         super().__init__()
 
-        self.blocks = ??? # TODO: Create a list of transformer decoder blocks and wrap inside nn.ModuleList
-    
+        self.blocks = nn.ModuleList([
+            DecoderBlock(dim, head_dim, mlp_ratio, use_bias) for _ in range(depth)
+        ])  
+       
+
     def forward(
             self, 
             x: torch.Tensor, 
@@ -296,4 +318,6 @@ class TransformerDecoderTrunk(nn.Module):
             xa_mask: Optional[torch.Tensor] = None, # Cross-attention mask
         ) -> torch.Tensor:
         
-        ??? # TODO
+        for block in self.blocks:
+            x = block(x, context, sa_mask, xa_mask)
+        return x

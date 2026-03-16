@@ -26,7 +26,7 @@ save_ckpt_freq: 200 # in millions of tokens
 # Logging
 log_wandb: True
 wandb_project: CS503_nanoGPT # wandb project name
-wandb_entity: <YOUR_WANDB_ENTITY_NAME> # Set to your wandb username
+wandb_entity: eplf-sion # Set to your wandb username
 wandb_run_name: auto # Set to auto to use the run_name
 
 # Model config
@@ -52,7 +52,7 @@ train_loader_config:
   max_seq_len: ${global_vars.max_seq_len}
   increase_seq_len_by_one: True # Loader returns 256+1 tokens to shift inputs/targets by one
   infinite: True
-  distributed: True
+  distributed: False
   num_workers: 10
   pin_memory: True
   shuffle: True
@@ -69,7 +69,7 @@ eval_loader_config:
   max_seq_len: ${global_vars.max_seq_len}
   increase_seq_len_by_one: True # Loader returns 256+1 tokens to shift inputs/targets by one
   infinite: False
-  distributed: True
+  distributed: False
   num_workers: 10
   pin_memory: True
   shuffle: False

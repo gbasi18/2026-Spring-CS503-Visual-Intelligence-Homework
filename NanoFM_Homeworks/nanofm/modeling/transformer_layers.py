@@ -92,7 +92,7 @@ class Attention(nn.Module):
 
         # TODO: Define here the linear layer(s) producing K, Q, V from the input x
         # Hint: Do you need to define three different projections, or can you use a single one for all three?
-        self.qkv = nn.Linear(dim,dim*3)
+        self.qkv = nn.Linear(dim,dim*3, bias=qkv_bias)
 
         self.attn_out_proj = nn.Linear(dim, dim, bias=proj_bias)
 
@@ -200,10 +200,10 @@ class Block(nn.Module):
     def __init__(self, dim: int, head_dim: int = 64, mlp_ratio: float = 4., use_bias: bool = False):
         super().__init__()
         self.norm1 = LayerNorm(dim, bias=use_bias)
-        self.attn = Attention(dim, head_dim, use_bias=use_bias)
+        self.attn = Attention(dim, head_dim, qkv_bias=use_bias, proj_bias=use_bias)
         self.norm2 = LayerNorm(dim, bias=use_bias)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(dim, mlp_hidden_dim, use_bias=use_bias)
+        self.mlp = Mlp(dim, mlp_hidden_dim, bias=use_bias)
 
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         x = x + self.attn(self.norm1(x), mask)
@@ -229,11 +229,11 @@ class DecoderBlock(nn.Module):
         self.context_norm = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
         self.norm2 = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
 
-        self.self_attn = Attention(dim, head_dim, use_bias=use_bias) # TODO Attention layer
-        self.cross_attn = Attention(dim, head_dim, use_bias=use_bias) # TODO CrossAttention layer
+        self.self_attn = Attention(dim, head_dim, qkv_bias=use_bias, proj_bias=use_bias) # TODO Attention layer
+        self.cross_attn = Attention(dim, head_dim, qkv_bias=use_bias, proj_bias=use_bias) # TODO CrossAttention layer
 
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(dim, mlp_hidden_dim, use_bias=use_bias) # TODO MLP layer
+        self.mlp = Mlp(dim, mlp_hidden_dim, bias=use_bias) # TODO MLP layer
 
     def forward(self, 
             x: torch.Tensor, 

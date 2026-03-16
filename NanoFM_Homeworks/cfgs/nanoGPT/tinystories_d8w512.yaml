@@ -52,7 +52,7 @@ train_loader_config:
   max_seq_len: ${global_vars.max_seq_len}
   increase_seq_len_by_one: True # Loader returns 256+1 tokens to shift inputs/targets by one
   infinite: True
-  distributed: False
+  distributed: True
   num_workers: 10
   pin_memory: True
   shuffle: True
@@ -69,7 +69,7 @@ eval_loader_config:
   max_seq_len: ${global_vars.max_seq_len}
   increase_seq_len_by_one: True # Loader returns 256+1 tokens to shift inputs/targets by one
   infinite: False
-  distributed: False
+  distributed: True
   num_workers: 10
   pin_memory: True
   shuffle: False

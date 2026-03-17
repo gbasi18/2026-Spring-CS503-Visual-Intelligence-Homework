@@ -13,3 +13,4 @@ nano4M_sol/data/
 __pycache__
 .ipynb_checkpoints
 NanoFM_Homeworks/wandb
+NanoFM_Homeworks/outputs/nanoMaskGIT/mnist_d8w512

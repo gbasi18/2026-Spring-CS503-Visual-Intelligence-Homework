@@ -14,3 +14,7 @@ __pycache__
 .ipynb_checkpoints
 NanoFM_Homeworks/wandb
 NanoFM_Homeworks/outputs/nanoMaskGIT/mnist_d8w512
+NanoFM_Homeworks/outputs/nanoGPT/tinystories_d8w512
+NanoFM_Homeworks/outputs/nanoMaskGIT/tinystories_d8w512
+NanoFM_Homeworks/interactive_job.out
+NanoFM_Homeworks/interactive_job.err

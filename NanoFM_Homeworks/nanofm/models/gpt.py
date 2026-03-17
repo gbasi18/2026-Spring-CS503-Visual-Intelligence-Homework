@@ -57,8 +57,10 @@ class GPT(nn.Module):
         self.padding_idx = padding_idx
         self.max_seq_len = max_seq_len
         self.init_std = init_std
-
-        self.input_embedding = nn.Embedding(vocab_size, dim, padding_idx=padding_idx) # TODO: Define the input embedding layer
+        if padding_idx == -100:
+            self.input_embedding = nn.Embedding(vocab_size, dim) # TODO: Define the input embedding layer
+        else:
+            self.input_embedding = nn.Embedding(vocab_size, dim, padding_idx=padding_idx) # TODO: Define the input embedding layer with padding_idx
         self.positional_embedding = nn.Parameter(torch.randn(max_seq_len,dim)) # TODO: Define the learnable positional embedding
         
         self.trunk = TransformerTrunk(dim = dim, depth = depth, head_dim = head_dim, mlp_ratio=mlp_ratio, use_bias=use_bias) # TODO: Define the transformer trunk

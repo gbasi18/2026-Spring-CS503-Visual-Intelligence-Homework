@@ -230,7 +230,7 @@ class DecoderBlock(nn.Module):
         self.norm2 = LayerNorm(dim, bias=use_bias) # TODO (use the LayerNorm defined above)
 
         self.self_attn = Attention(dim, head_dim, qkv_bias=use_bias, proj_bias=use_bias) # TODO Attention layer
-        self.cross_attn = Attention(dim, head_dim, qkv_bias=use_bias, proj_bias=use_bias) # TODO CrossAttention layer
+        self.cross_attn = CrossAttention(dim, head_dim, qkv_bias=use_bias, proj_bias=use_bias) # TODO CrossAttention layer
 
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(dim, mlp_hidden_dim, bias=use_bias) # TODO MLP layer
@@ -241,14 +241,14 @@ class DecoderBlock(nn.Module):
             sa_mask: Optional[torch.Tensor] = None, # Self-attention mask
             xa_mask: Optional[torch.Tensor] = None, # Cross-attention mask
         ) -> torch.Tensor:
-
+        
         # Self-attention, then cross-attention, then MLP
         # Make sure to apply the self-attention mask (sa_mask) to the self-attention layer,
         # and the cross-attention mask (xa_mask) to the cross-attention layer.
         # Don't forget to add the residual connections after each layer, and
         # to apply the normalizations on the inputs of each layer.
-        x = x + self.self_attn(self.query_norm(x), mask=sa_mask)
-        x = x + self.cross_attn(self.context_norm(x), self.context_norm(context), mask=xa_mask)
+        x = x + self.self_attn(self.norm1(x), mask=sa_mask)
+        x = x + self.cross_attn(self.query_norm(x), self.context_norm(context), mask=xa_mask)
         x = x + self.mlp(self.norm2(x))
         return x
 

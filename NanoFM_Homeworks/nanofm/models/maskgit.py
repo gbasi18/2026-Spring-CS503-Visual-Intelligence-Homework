@@ -168,9 +168,11 @@ class MaskGIT(nn.Module):
         # Note: How can you avoid using a for loop here, and instead use
         # vectorized operations?
         # Hint: Don't forget to create the mask on the same device as seq.
-        num_masked_tokens = torch.randint(1,L+1, (B,), device = seq.device) # shape (B,)
-        random_noise = torch.rand(B, L, device=seq.device) # shape (B, L)
-        mask = random_noise.argsort(dim=1) < num_masked_tokens.unsqueeze(1) # shape (B, L)
+        num_masked_tokens = torch.randint(1,L+1, (B,), device = seq.device)
+        random_noise = torch.rand(B, L, device=seq.device) 
+        mask = random_noise.argsort(dim=1) < num_masked_tokens.unsqueeze(1)  # Since all random_noise and num_masked_tokens are on the same device, 
+        # we can directly compare them without needing to move tensors between devices. It return a torch.BoolTensor of shape (B, L) where True indicates masked-out tokens and False indicates non-masked tokens.
+   
         return mask
 
     def compute_ce_loss(self, logits: torch.Tensor, target_seq: torch.LongTensor, ignore_index: int = -100) -> torch.Tensor:
@@ -246,26 +248,10 @@ class MaskGIT(nn.Module):
         # represents the number of tokens to unmask at that step. The sum of the integers in
         # `schedule` should equal `total_tokens`.
     
-
         base = total_tokens // num_steps
         schedule = [base] * num_steps
-        schedule[-1] += total_tokens - sum(schedule)
-
-        # Cosine schedule
-
-        # Fraction remaining after each step: cos goes from 0 to π/2 → values from 1 to 0
-        #fractions = [math.cos(math.pi / 2 * (i / num_steps)) for i in range(num_steps + 1)]
-        # Number still masked after each step
-        #remaining = [round(total_tokens * f) for f in fractions]  # remaining[0] = total_tokens, remaining[-1] = 0
-        #schedule = [remaining[i] - remaining[i + 1] for i in range(num_steps)]
-
-        # Fix any rounding drift: adjust last step so sum is exact
-        #schedule[-1] += total_tokens - sum(schedule)
-
-        # Cosine can produce 0-token steps when num_steps is large relative to total_tokens.
-        # Redistribute zeros if needed:
-        #schedule = [max(s, 0) for s in schedule]
-
+        schedule[-1] += total_tokens - sum(schedule) # I give to the last step the remaining tokens.
+        
         assert len(schedule) == num_steps, "Schedule length should match the number of steps."
         assert sum(schedule) == total_tokens, "Total number of tokens to unmask should match the sum of the schedule."
 

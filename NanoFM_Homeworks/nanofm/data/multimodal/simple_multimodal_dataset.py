@@ -114,7 +114,7 @@ class SimpleMultimodalDataset(Dataset):
             if 'tok' in modality:
                 tokens = np.load(file_path)[augmentation_idx]
                 tokens = torch.from_numpy(tokens).long()
-            elif 'scene_desc' in modality:
+            elif 'scene_desc' in modality or "caption" in modality:
                 with open(file_path, 'r') as f:
                     captions = json.load(f)
                 caption = captions[augmentation_idx]
@@ -122,6 +122,7 @@ class SimpleMultimodalDataset(Dataset):
                     caption, max_length=self.text_max_length, padding='max_length', 
                     truncation=True, return_tensors='pt'
                 )
+                
                 tokens = tokenized['input_ids'][0]
             else:
                 raise ValueError(f"Unknown modality: {modality}")

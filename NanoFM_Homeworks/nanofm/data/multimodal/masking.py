@@ -87,6 +87,7 @@ class SimpleMultimodalMasking(object):
         # Get the number of tokens for each modality
         input_token_budget = (self.input_dirichlet.sample() * num_input_tokens).floor().int()
         diff = num_input_tokens - input_token_budget.sum()
+        
         # Adds the remaining tokens by sampling from the Dirichlet and taking the argmax
         # This avoids adding tokens to modalities that shouldn't be sampled (i.e. with alphas ~=0)
         input_token_budget += torch.bincount(self.input_dirichlet.sample((diff,)).argmax(dim=-1), minlength=len(input_token_budget))
@@ -151,6 +152,7 @@ class SimpleMultimodalMasking(object):
             n_target_tokens = target_token_budget[mod_idx]
             
             # Sample input and target positions
+            
             noise = torch.rand(num_tokens)
             ids_shuffle = torch.argsort(noise, dim=0)
             input_pos = ids_shuffle[:n_input_tokens].sort()[0]

@@ -97,7 +97,6 @@ class Attention(nn.Module):
         self.attn_out_proj = nn.Linear(dim, dim, bias=proj_bias)
 
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         B, L, D = x.shape # Batch size, sequence length, and dimension
 
         # TODO: Compute the keys K, queries Q, and values V from x. Each should be of shape [B num_heads L head_dim].
@@ -114,8 +113,7 @@ class Attention(nn.Module):
             # TODO: Apply the optional attention mask. Wherever the mask is False, replace the attention 
             # matrix value by negative infinity → zero attention weight after softmax.
             attn = torch.where(mask, attn,-torch.inf)
-
-
+            
         # TODO: Compute the softmax over the last dimension
         attn = nn.functional.softmax(attn,dim = -1)
 
@@ -144,7 +142,7 @@ class CrossAttention(nn.Module):
         self.scale = head_dim ** -0.5
         self.head_dim = head_dim
         # TODO: Define here the linear layer producing Q from the input x
-        self.q = nn.Linear(dim,dim , bias=qkv_bias)
+        self.q = nn.Linear(dim, dim , bias=qkv_bias)
 
         # TODO: Define here the linear layers producing K, V from the context
         # Hint: Do you need to define two different projections, or can you use a single one for both?
@@ -171,7 +169,6 @@ class CrossAttention(nn.Module):
         if mask is not None:
             mask = rearrange(mask, "b n m -> b 1 n m") # Unsqueeze for multi-head attention
             # TODO: Apply the optional attention mask. Wherever the mask is False, replace the attention 
-            # matrix value by negative infinity → zero attention weight after softmax.
             attn = torch.where(mask, attn, -torch.inf)
 
         # TODO: Compute the softmax over the last dimension

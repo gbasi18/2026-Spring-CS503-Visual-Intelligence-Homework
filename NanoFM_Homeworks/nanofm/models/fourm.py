@@ -65,6 +65,7 @@ class FourM(nn.Module):
         per_modality_loss_avg: If True, compute the loss for each modality separately and average them.
             Otherwise, compute the loss over all target tokens together.
     """
+    
     def __init__(
         self,
         enc_tokens_read_key: str,
@@ -318,6 +319,7 @@ class FourM(nn.Module):
         Returns:
              A scalar loss value and a dictionary of per-modality losses.
         """
+        
         B, L, vocab_size = logits.shape
         logits = logits.reshape(-1, vocab_size)
         target_seq = target_seq.reshape(-1)
@@ -472,8 +474,8 @@ class FourM(nn.Module):
             # TODO: Sample new tokens for the predicted_logits
             # Hint: Use the sample_tokens function from utils/sampling.py
             # Make sure to pass the `temp`, `top_k` and `top_p` arguments
-            samples, _ = sample_tokens(predicted_logits, temp=temp, top_k=top_k, top_p=top_p)
-
+            samples, _ = sample_tokens(predicted_logits, temperature=temp, top_k=top_k, top_p=top_p)
+            samples = samples.unsqueeze(0)
             # TODO: Concatenate the new tokens to the encoder input tokens for the next step
             # Specifically, concatenate the k samples to enc_input_tokens, the k dec_input_positions
             # to enc_input_positions, and the k dec_input_modalities to enc_input_modalities.

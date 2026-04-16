@@ -23,3 +23,6 @@ NanoFM_Homeworks/interactive_job.err
 NanoFM_Homeworks/outputs/nanoGPT/mnist_d8w512
 clevr_com_304
 NanoFM_Homeworks/outputs/nano4m/
+NanoFM_Homeworks/multi_node_job.out
+NanoFM_Homeworks/outputs/nano4M/
+NanoFM_Homeworks/multi_node_job.err

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=nanovlm_train
-#SBATCH --time=08:00:00
+dcd#SBATCH --time=12:00:00
 #SBATCH --account=cs-503
 #SBATCH --qos=cs-503
 #SBATCH --gres=gpu:2

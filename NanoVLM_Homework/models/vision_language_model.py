@@ -189,7 +189,7 @@ class VisionLanguageModel(nn.Module):
                 attention_mask = torch.cat([attention_mask,torch.ones_like(next_token, dtype=attention_mask.dtype)], dim=1)  # (vi)
 
 
-            if next_token.item() == 2: # vii)
+            if (next_token == 2).all(): # vii)
                 break
 
         return generated_tokens  # (viii)

@@ -72,18 +72,11 @@ class VisionLanguageModel(nn.Module):
         # Process image through vision backbone and vision modality projector
         image_embeds = self.vision_encoder(image)
         image_embeds = self.MP(image_embeds)
-
         # Step 2: Compute text embeddings
         # Get text embeddings using the token_embedding layer of self.decoder
         text_embeds =  self.decoder.token_embedding(input_ids)
-
-
-
         # Step 3: Concatenate image and text embeddings
         combined_embeds = torch.cat([image_embeds, text_embeds], dim=1)
-
-
-
         # Step 4: Extend the attention mask
         # The current attention_mask only covers text tokens (B, T)
         # Note: image tokens should always be attended to

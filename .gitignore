@@ -27,3 +27,5 @@ NanoFM_Homeworks/multi_node_job.out
 NanoFM_Homeworks/outputs/nano4M/
 NanoFM_Homeworks/multi_node_job.err
 NanoVLM_Homework/checkpoints/
+NanoFM_Homeworks/data/MNIST/raw
+NanoFM_Homeworks/data/cifar-10-batches-py

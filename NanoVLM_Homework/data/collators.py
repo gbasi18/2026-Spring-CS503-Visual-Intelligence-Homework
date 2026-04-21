@@ -42,6 +42,7 @@ class VQACollator(object):  # Visual Question Answering Collator
 
 
         # Step 4 — Create causal labels
+        # I did this, so I do not need to clone the labels
         labels = torch.full_like(input_ids, -100)      # clone the input_ids
         labels[:,:-1] = input_ids[:,1:] # in a causal LM, the target at position t is the token at position t+1
         

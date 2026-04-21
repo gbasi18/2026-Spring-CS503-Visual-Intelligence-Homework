@@ -182,7 +182,7 @@ class VisionLanguageModel(nn.Module):
                 attention_mask = torch.cat([attention_mask,torch.ones_like(next_token, dtype=attention_mask.dtype)], dim=1)  # (vi)
 
 
-            if (next_token == 2).all(): # vii)
+            if (next_token == 2).all(): # (vii)
                 break
 
         return generated_tokens  # (viii)
@@ -237,7 +237,7 @@ class VisionLanguageModel(nn.Module):
         # Step 5: DECODE LOOP
         for i in range(1, max_new_tokens):
 
-            next_embd = self.decoder.token_embedding(next_token)  # embed only the single last-generated token
+            next_embd = self.decoder.token_embedding(next_token) # embed only the single last-generated token
 
             model_out, past_key_values = self.decoder.forward_kv(next_embd, past_key_values=past_key_values)  # decoder.forward_kv processes 1 token but attends over full history via cache
 
